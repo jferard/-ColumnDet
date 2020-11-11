@@ -94,7 +94,7 @@ class IntegerDescription(FieldDescription):
 
 class PercentageDescription(FieldDescription):
     def __init__(self, pre: bool, sign: Optional[str],
-                 float_description: FloatDescription):
+                 float_description: FieldDescription):
         self._pre = pre
         self._sign = sign
         self._float_description = float_description
@@ -102,3 +102,8 @@ class PercentageDescription(FieldDescription):
     def __str__(self):
         pre = "pre" if self._pre else "post"
         return f"percentage/{pre}/{self._none_to_empty(self._sign)}/{self._float_description}"
+
+
+class TextDescription(FieldDescription):
+    def __str__(self):
+        return "text"

@@ -25,28 +25,35 @@ from columndet.parser import Parser
 
 
 class DateDetTest(unittest.TestCase):
-    def test_date(self):
-        for p in Path("fixtures/date").glob("*.txt"):
-            self.helper_test_a_path(p)
-
-    def test_float(self):
-        for p in Path("fixtures/float").glob("*.txt"):
-            self.helper_test_a_path(p)
-
     def test_boolean(self):
-        for p in Path("fixtures/bool").glob("*.txt"):
-            self.helper_test_a_path(p)
+        self.helper_test_dir("fixtures/bool")
 
     def test_currency(self):
-        for p in Path("fixtures/currency").glob("*.txt"):
-            self.helper_test_a_path(p)
+        self.helper_test_dir("fixtures/currency")
+
+    def test_date(self):
+        self.helper_test_dir("fixtures/date")
+
+    def test_datetime(self):
+        self.helper_test_dir("fixtures/datetime")
+
+    def test_float(self):
+        self.helper_test_dir("fixtures/float")
+
+    def test_integer(self):
+        self.helper_test_dir("fixtures/integer")
 
     def test_percentage(self):
-        for p in Path("fixtures/percentage").glob("*.txt"):
-            self.helper_test_a_path(p)
+        self.helper_test_dir("fixtures/percentage")
+
+    def test_text(self):
+        self.helper_test_dir("fixtures/text")
 
     def test_failing(self):
-        for p in Path("fixtures/failing").glob("*.txt"):
+        self.helper_test_dir("fixtures/failing")
+
+    def helper_test_dir(self, dir_path):
+        for p in Path(dir_path).glob("*.txt"):
             self.helper_test_a_path(p)
 
     def helper_test_a_path(self, p):

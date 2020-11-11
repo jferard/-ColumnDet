@@ -26,7 +26,7 @@ from columndet.booldet import BooleanSniffer
 from columndet.datedet import (YMDColumnTypeSniffer, HMSColumnTypeSniffer,
                                DateFieldDescriptionFactory)
 from columndet.field_description import CurrencyDescription, \
-    PercentageDescription, BooleanDescription
+    PercentageDescription, BooleanDescription, TextDescription
 from columndet.floatdet import FloatParser
 from columndet.lexer import (Lexer)
 from columndet.util import (LocaleType, get_unique, get_some, TokenRow,
@@ -97,11 +97,11 @@ class Parser:
         self._ymd_col_type_sniffer = ymd_col_type_sniffer
         self._hms_col_type_sniffer = hms_col_type_sniffer
 
-    def parse(self, texts: List[str]) -> List[Token]:
+    def parse(self, texts: List[str]) -> FieldDescription:
         token_rows = [self._lexer.lex(text.strip()) for text in texts]
         non_empty_token_rows = [TokenRow(r) for r in token_rows if r]
         if not non_empty_token_rows:
-            return [Token(OpCode.TEXT, None)]
+            return TextDescription()
 
         rows_infos = RowsInfos.create(non_empty_token_rows, self._threshold)
         try:
@@ -215,7 +215,7 @@ class UnsizedColumnSniffer:
             try:
                 last_opcodes = self._rows_infos.get_two_uniques_last_opcodes()
             except ValueError:
-                return [Token(OpCode.TEXT, None)]
+                return TextDescription()
             else:
                 if (set(last_opcodes) == {OpCode.NUMBER,
                                           OpCode.ANY_NUMBER_SEPARATOR} or
@@ -241,7 +241,9 @@ class UnsizedColumnSniffer:
             elif last_opcode == OpCode.ANY_CURRENCY_SIGN:
                 return self._try_post_currency()
 
-    def _try_float_or_integer(self) -> List[Token]:
+        return TextDescription()
+
+    def _try_float_or_integer(self) -> FieldDescription:
         return FloatParser(self._token_rows, self._threshold).sniff()
 
     def _try_pre_percentage(self):
