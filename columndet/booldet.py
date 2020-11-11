@@ -19,18 +19,17 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
-from typing import Set, Optional, List
+from typing import Set
 
-from columndet.i18n import TRUE_FALSE_BY_LOCALE_NAME
-from columndet.util import get_some, LocaleType
 from columndet.field_description import FieldDescription, BooleanDescription
+from columndet.i18n import TRUE_FALSE_BY_LOCALE_NAME
+from columndet.util import get_some
+
 
 class BooleanSniffer:
-    def __init__(self, texts: Set[str], threshold: float,
-                 locale_names: Optional[List[LocaleType]]):
+    def __init__(self, texts: Set[str], threshold: float):
         self._texts = texts
         self._threshold = threshold
-        self._locale_names = locale_names
 
     def sniff(self) -> FieldDescription:
         counter = collections.Counter(self._texts)
@@ -38,7 +37,7 @@ class BooleanSniffer:
         if t_f:
             # can't create the reverse dict because of UTF-8
             for locale_name, locale_t_f in TRUE_FALSE_BY_LOCALE_NAME.items():
-                if (set(t_f) <= set(locale_t_f)):
+                if set(t_f) <= set(locale_t_f):
                     return BooleanDescription(*locale_t_f)
         else:
             raise ValueError("Empty int_values")  # should not happen

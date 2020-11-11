@@ -26,9 +26,11 @@ from columndet.util import (get_unique, get_some, TokenRow)
 
 
 class FloatParser:
-    def __init__(self, token_rows: List[TokenRow], threshold: float):
+    def __init__(self, token_rows: List[TokenRow], threshold: float,
+                 prefer_dot_as_decimal_separator: bool = True):
         self._token_rows = token_rows
         self._threshold = threshold
+        self._prefer_dot_as_decimal_separator = prefer_dot_as_decimal_separator
         self._errors = 0
         self._last_sep = collections.Counter()
         self._other_sep = collections.Counter()
@@ -48,7 +50,15 @@ class FloatParser:
 
         dec_seps = get_some(self._last_sep, 2, self._threshold)
         if dec_seps:
-            return FloatDescription(thousands_sep, dec_seps[0])
+            dec_sep = dec_seps[0]
+            if thousands_sep is None and len(
+                    dec_seps) == 1 and dec_sep == ".":  # !!
+                if self._prefer_dot_as_decimal_separator:
+                    return FloatDescription(thousands_sep, dec_sep)
+                else:
+                    return IntegerDescription(dec_sep)
+            else:
+                return FloatDescription(thousands_sep, dec_sep)
         elif thousands_sep is not None:
             return IntegerDescription(thousands_sep)
         else:

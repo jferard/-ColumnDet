@@ -154,7 +154,7 @@ class ColumnInfos:
                                t.opcode != OpCode.SPACE]
         else:
             non_null_tokens = [t for t in tokens if is_null(t.opcode)]
-        return ColumnInfos(tokens, non_null_tokens, threshold)
+        return ColumnInfos(tokens, TokenRow(non_null_tokens), threshold)
 
     def __init__(self, tokens: TokenRow,
                  non_null_tokens: TokenRow,
@@ -204,13 +204,16 @@ class ColumnInfos:
         tokens = [Token(t.opcode, t.text[:n]) for t in self._tokens]
         non_null_tokens = [Token(t.opcode, t.text[:n]) for t in
                            self._non_null_tokens]
-        first = ColumnInfos(tokens, non_null_tokens, self._threshold)
+        first = ColumnInfos(TokenRow(tokens), TokenRow(non_null_tokens),
+                            self._threshold)
 
         tokens = [Token(t.opcode, t.text[n:]) for t in self._tokens]
         non_null_tokens = [Token(t.opcode, t.text[n:]) for t in
                            self._non_null_tokens]
-        second = ColumnInfos(tokens, non_null_tokens, self._threshold)
-        return (first, second)
+        second = ColumnInfos(TokenRow(tokens), TokenRow(non_null_tokens),
+                             self._threshold)
+        return first, second
+
 
 class LocalesWrapper:
     def __init__(self, locale_names: Optional[Sequence[LocaleType]]):

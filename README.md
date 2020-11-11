@@ -14,10 +14,10 @@ be valdiated by a human.
 * `currency` : a currency
 * `date` : a date
 * `datetime` : a date and a time or a time
-* `text` : some text
 * `float` : a float
 * `integer` : an integer
 * `percentage` : a percentage
+* `text` : some text
 
 ## Use case
 ColumnDet is a helper for CSV file loaders.

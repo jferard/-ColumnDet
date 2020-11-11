@@ -18,19 +18,19 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import collections
-from typing import (Optional, Sequence, List, Collection, Counter)
+from typing import (Optional, List, Collection, Counter)
 
 from columndet import (ColumnInfos, OpCode, YMDBlockSniffer, HMSBlockSniffer,
                        FieldDescription, DateSniffer)
 from columndet.booldet import BooleanSniffer
 from columndet.datedet import (YMDColumnTypeSniffer, HMSColumnTypeSniffer,
                                DateFieldDescriptionFactory)
-from columndet.field_description import CurrencyDescription, \
-    PercentageDescription, BooleanDescription, TextDescription
+from columndet.field_description import (CurrencyDescription,
+                                         PercentageDescription,
+                                         BooleanDescription, TextDescription)
 from columndet.floatdet import FloatParser
 from columndet.lexer import (Lexer)
-from columndet.util import (LocaleType, get_unique, get_some, TokenRow,
-                            Token)
+from columndet.util import (get_unique, get_some, TokenRow)
 
 
 class RowsInfos:
@@ -75,28 +75,23 @@ class Parser:
 
     @staticmethod
     def create(lexer: Optional[Lexer] = None, threshold: float = 0.95,
-               locale_names: Optional[Sequence[LocaleType]] = None):
+               prefer_dot_as_decimal_separator: bool = True):
         if lexer is None:
             lexer = Lexer()
-        if locale_names is None:
-            locale_names = []
-        ymd_col_type_sniffer = YMDColumnTypeSniffer.create(threshold,
-                                                           locale_names)
-        hms_col_type_sniffer = HMSColumnTypeSniffer.create(threshold,
-                                                           locale_names)
-        return Parser(lexer, threshold, tuple(locale_names),
-                      ymd_col_type_sniffer,
-                      hms_col_type_sniffer)
+        ymd_col_type_sniffer = YMDColumnTypeSniffer.create(threshold)
+        hms_col_type_sniffer = HMSColumnTypeSniffer.create(threshold)
+        return Parser(lexer, threshold, ymd_col_type_sniffer,
+                      hms_col_type_sniffer, prefer_dot_as_decimal_separator)
 
     def __init__(self, lexer: Lexer, threshold: float,
-                 locale_names: Sequence[LocaleType],
                  ymd_col_type_sniffer: YMDColumnTypeSniffer,
-                 hms_col_type_sniffer: HMSColumnTypeSniffer):
+                 hms_col_type_sniffer: HMSColumnTypeSniffer,
+                 prefer_dot_as_decimal_separator: bool = True):
         self._lexer = lexer
         self._threshold = threshold
-        self._locale_names = locale_names
         self._ymd_col_type_sniffer = ymd_col_type_sniffer
         self._hms_col_type_sniffer = hms_col_type_sniffer
+        self._prefer_dot_as_decimal_separator = prefer_dot_as_decimal_separator
 
     def parse(self, texts: List[str]) -> FieldDescription:
         token_rows = [self._lexer.lex(text.strip()) for text in texts]
@@ -129,40 +124,39 @@ class Parser:
             return OneColumnSniffer(self._ymd_col_type_sniffer,
                                     self._hms_col_type_sniffer,
                                     valid_token_rows,
-                                    self._threshold, self._locale_names).sniff()
+                                    self._threshold).sniff()
         else:
             return DateSniffer(self._ymd_col_type_sniffer,
                                self._hms_col_type_sniffer,
                                valid_token_rows,
-                               self._threshold, self._locale_names).sniff()
+                               self._threshold).sniff()
 
     def _parse_unsized(self, rows_infos: RowsInfos,
                        non_empty_token_rows: List[TokenRow]
                        ) -> FieldDescription:
         return UnsizedColumnSniffer(rows_infos, non_empty_token_rows,
-                                    self._threshold, self._locale_names).sniff()
+                                    self._threshold,
+                                    self._prefer_dot_as_decimal_separator).sniff()
 
 
 class OneColumnSniffer:
     """
-    A sniffer. Try to find the format of a one token field: a date, datetime or
+    A sniffer. Try to find the date_format of a one token field: a date, datetime or
     a boolean
     """
 
     def __init__(self, ymd_col_type_sniffer: YMDColumnTypeSniffer,
                  hms_col_type_sniffer: HMSColumnTypeSniffer,
-                 token_rows: List[TokenRow], threshold: float,
-                 locale_names: Optional[List[LocaleType]]):
+                 token_rows: List[TokenRow], threshold: float):
         self._ymd_col_type_sniffer = ymd_col_type_sniffer
         self._hms_col_type_sniffer = hms_col_type_sniffer
         self._token_rows = token_rows
         self._threshold = threshold
         self._date_field_factory = DateFieldDescriptionFactory()
-        self._locale_names = locale_names
 
     def sniff(self) -> FieldDescription:
-        tokens_col = ColumnInfos.create([tr.only for tr in self._token_rows],
-                                        None, self._threshold)
+        rows = [tr.only for tr in self._token_rows]
+        tokens_col = ColumnInfos.create(TokenRow(rows), None, self._threshold)
         opcode = tokens_col.unique_opcode
         if opcode == OpCode.NUMBER:
             out_tokens = self._sniff_dateblock_or_bool_01(tokens_col)
@@ -193,22 +187,22 @@ class OneColumnSniffer:
 
     def _sniff_bool_literal(self, col: ColumnInfos) -> FieldDescription:
         texts = col.texts
-        return BooleanSniffer(texts, self._threshold,
-                              self._locale_names).sniff()
+        return BooleanSniffer(texts, self._threshold).sniff()
 
 
 class UnsizedColumnSniffer:
     """
-    A sniffer. Try to find the format of a sized field: a _currency, a float,
+    A sniffer. Try to find the date_format of a sized field: a _currency, a float,
     an integer, a percentage or some _text.
     """
 
     def __init__(self, rows_infos: RowsInfos,
                  token_rows: List[TokenRow], threshold: float,
-                 locale_names: Optional[List[LocaleType]] = None):
+                 prefer_dot_as_decimal_separator: bool = True):
         self._rows_infos = rows_infos
         self._token_rows = token_rows
         self._threshold = threshold
+        self._prefer_dot_as_decimal_separator = prefer_dot_as_decimal_separator
 
     def sniff(self) -> FieldDescription:
         try:
@@ -267,20 +261,23 @@ class UnsizedColumnSniffer:
             return TextDescription.INSTANCE
 
     def _try_float_or_integer(self) -> FieldDescription:
-        return FloatParser(self._token_rows, self._threshold).sniff()
+        return FloatParser(self._token_rows, self._threshold,
+                           self._prefer_dot_as_decimal_separator).sniff()
 
     def _try_pre_percentage(self):
         sign = self._get_pre()
         rows = [row.lstrip(OpCode.ANY_PERCENTAGE_SIGN, OpCode.SPACE)
                 for row in self._token_rows]
-        float_description = FloatParser(rows, self._threshold).sniff()
+        float_description = FloatParser(rows, self._threshold,
+                                        self._prefer_dot_as_decimal_separator).sniff()
         return PercentageDescription(True, sign, float_description)
 
     def _try_pre_currency(self):
         currency = self._get_pre()
         rows = [row.lstrip(OpCode.ANY_CURRENCY_SIGN, OpCode.SPACE)
                 for row in self._token_rows]
-        float_description = FloatParser(rows, self._threshold).sniff()
+        float_description = FloatParser(rows, self._threshold,
+                                        self._prefer_dot_as_decimal_separator).sniff()
 
         return CurrencyDescription(True, currency, float_description)
 
@@ -297,14 +294,16 @@ class UnsizedColumnSniffer:
         sign = self._get_post()
         rows = [row.rstrip(OpCode.ANY_PERCENTAGE_SIGN, OpCode.SPACE)
                 for row in self._token_rows]
-        float_description = FloatParser(rows, self._threshold).sniff()
+        float_description = FloatParser(rows, self._threshold,
+                                        self._prefer_dot_as_decimal_separator).sniff()
         return PercentageDescription(False, sign, float_description)
 
     def _try_post_currency(self):
         currency = self._get_post()
         rows = [row.rstrip(OpCode.ANY_CURRENCY_SIGN, OpCode.SPACE)
                 for row in self._token_rows]
-        float_description = FloatParser(rows, self._threshold).sniff()
+        float_description = FloatParser(rows, self._threshold,
+                                        self._prefer_dot_as_decimal_separator).sniff()
 
         return CurrencyDescription(False, currency, float_description)
 

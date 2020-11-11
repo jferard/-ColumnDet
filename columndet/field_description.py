@@ -38,38 +38,39 @@ class BooleanDescription(FieldDescription):
 
 class CurrencyDescription(FieldDescription):
     def __init__(self, pre: bool, currency: Optional[str],
-                 float_description: "FloatDescription"):
+                 float_description: FieldDescription):
         self._pre = pre
         self._currency = currency
         self._float_description = float_description
 
     def __str__(self):
         pre = "pre" if self._pre else "post"
-        return f"currency/{pre}/{self._none_to_empty(self._currency)}/{self._float_description}"
+        return (f"currency/{pre}/{self._none_to_empty(self._currency)}/"
+                f"{self._float_description}")
 
 
 class DateDescription(FieldDescription):
-    def __init__(self, format: str, locale_name: Optional[str]):
-        self._format = format
+    def __init__(self, date_format: str, locale_name: Optional[str]):
+        self._date_format = date_format
         self._locale_name = locale_name
 
     def __str__(self):
         if self._locale_name is None:
-            return f"date/{self._format}"
+            return f"date/{self._date_format}"
         else:
-            return f"date/{self._format}/{self._locale_name}"
+            return f"date/{self._date_format}/{self._locale_name}"
 
 
 class DatetimeDescription(FieldDescription):
-    def __init__(self, format: str, locale_name: Optional[str]):
-        self._format = format
+    def __init__(self, date_format: str, locale_name: Optional[str]):
+        self._date_format = date_format
         self._locale_name = locale_name
 
     def __str__(self):
         if self._locale_name is None:
-            return f"datetime/{self._format}"
+            return f"datetime/{self._date_format}"
         else:
-            return f"datetime/{self._format}/{self._locale_name}"
+            return f"datetime/{self._date_format}/{self._locale_name}"
 
 
 class FloatDescription(FieldDescription):
@@ -78,7 +79,8 @@ class FloatDescription(FieldDescription):
         self._decimal_sep = decimal_sep
 
     def __str__(self):
-        return f"float/{self._none_to_empty(self._thousand_sep)}/{self._decimal_sep}"
+        return (f"float/{self._none_to_empty(self._thousand_sep)}/"
+                f"{self._decimal_sep}")
 
 
 class IntegerDescription(FieldDescription):
@@ -101,10 +103,13 @@ class PercentageDescription(FieldDescription):
 
     def __str__(self):
         pre = "pre" if self._pre else "post"
-        return f"percentage/{pre}/{self._none_to_empty(self._sign)}/{self._float_description}"
+        return (f"percentage/{pre}/{self._none_to_empty(self._sign)}/"
+                f"{self._float_description}")
 
 
 class TextDescription(FieldDescription):
+    INSTANCE = None
+
     def __str__(self):
         return "text"
 

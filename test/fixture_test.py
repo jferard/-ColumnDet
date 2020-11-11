@@ -57,7 +57,10 @@ class DateDetTest(unittest.TestCase):
             self.helper_test_a_path(p)
 
     def helper_test_a_path(self, p):
-        parser = Parser.create(locale_names=['fr_FR', 'en_US'])
+        if p.stem.startswith("FR"):
+            parser = Parser.create(prefer_dot_as_decimal_separator=False)
+        else:
+            parser = Parser.create()
         with p.open("r", encoding='utf-8') as source:
             print(p)
             expected = next(source).strip()

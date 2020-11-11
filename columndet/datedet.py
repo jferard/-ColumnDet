@@ -48,7 +48,7 @@ class DateCode(Enum):
 
 class DateSniffer:
     """
-    A sniffer. Try to find the format of a sized field: a date or a datetime.
+    A sniffer. Try to find the date_format of a sized field: a date or a datetime.
     """
 
     def __init__(self, ymd_col_type_sniffer: "YMDColumnTypeSniffer",
@@ -154,7 +154,7 @@ class YMDColumnTypeSniffer:
     """
 
     @staticmethod
-    def create(threshold: float, locale_names: Optional[Sequence[LocaleType]]):
+    def create(threshold: float):
         return YMDColumnTypeSniffer(threshold, NAMES_BY_DATECODE_BY_LOCALE)
 
     def __init__(self, threshold: float, names_by_datecode_by_locale: Mapping[
@@ -241,7 +241,7 @@ class YMDColumnTypeSniffer:
 
 class HMSColumnTypeSniffer:
     @staticmethod
-    def create(threshold: float, _locale_names: Optional[Sequence[LocaleType]]):
+    def create(threshold: float):
         return HMSColumnTypeSniffer(threshold)
 
     def __init__(self, threshold: float):
