@@ -107,3 +107,6 @@ class PercentageDescription(FieldDescription):
 class TextDescription(FieldDescription):
     def __str__(self):
         return "text"
+
+
+TextDescription.INSTANCE = TextDescription()

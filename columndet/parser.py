@@ -84,7 +84,8 @@ class Parser:
                                                            locale_names)
         hms_col_type_sniffer = HMSColumnTypeSniffer.create(threshold,
                                                            locale_names)
-        return Parser(lexer, threshold, tuple(locale_names), ymd_col_type_sniffer,
+        return Parser(lexer, threshold, tuple(locale_names),
+                      ymd_col_type_sniffer,
                       hms_col_type_sniffer)
 
     def __init__(self, lexer: Lexer, threshold: float,
@@ -101,7 +102,7 @@ class Parser:
         token_rows = [self._lexer.lex(text.strip()) for text in texts]
         non_empty_token_rows = [TokenRow(r) for r in token_rows if r]
         if not non_empty_token_rows:
-            return TextDescription()
+            return TextDescription.INSTANCE
 
         rows_infos = RowsInfos.create(non_empty_token_rows, self._threshold)
         try:
@@ -192,7 +193,8 @@ class OneColumnSniffer:
 
     def _sniff_bool_literal(self, col: ColumnInfos) -> FieldDescription:
         texts = col.texts
-        return BooleanSniffer(texts, self._threshold, self._locale_names).sniff()
+        return BooleanSniffer(texts, self._threshold,
+                              self._locale_names).sniff()
 
 
 class UnsizedColumnSniffer:
@@ -202,7 +204,8 @@ class UnsizedColumnSniffer:
     """
 
     def __init__(self, rows_infos: RowsInfos,
-                 token_rows: List[TokenRow], threshold: float, locale_names: Optional[List[LocaleType]] = None):
+                 token_rows: List[TokenRow], threshold: float,
+                 locale_names: Optional[List[LocaleType]] = None):
         self._rows_infos = rows_infos
         self._token_rows = token_rows
         self._threshold = threshold
@@ -210,38 +213,58 @@ class UnsizedColumnSniffer:
     def sniff(self) -> FieldDescription:
         try:
             first_opcode = self._rows_infos.get_unique_first_opcode()
-            last_opcode = self._rows_infos.get_unique_last_opcode()
         except ValueError:
-            try:
-                last_opcodes = self._rows_infos.get_two_uniques_last_opcodes()
-            except ValueError:
-                return TextDescription()
-            else:
-                if (set(last_opcodes) == {OpCode.NUMBER,
-                                          OpCode.ANY_NUMBER_SEPARATOR} or
-                        set(last_opcodes) == {OpCode.NUMBER,
-                                              OpCode.ANY_NUMBER_SEPARATOR,
-                                              OpCode.ANY_DATE_OR_NUMBER_SEPARATOR}):
-                    if first_opcode == OpCode.NUMBER:
-                        return self._try_float_or_integer()  # just try float?
-                    elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
-                        return self._try_pre_percentage()
-                    elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
-                        return self._try_pre_currency()
+            return TextDescription.INSTANCE
         else:
-            if last_opcode == OpCode.NUMBER:
-                if first_opcode == OpCode.NUMBER:
-                    return self._try_float_or_integer()
-                elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
-                    return self._try_pre_percentage()
-                elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
-                    return self._try_pre_currency()
-            elif last_opcode == OpCode.ANY_PERCENTAGE_SIGN:
-                return self._try_post_percentage()
-            elif last_opcode == OpCode.ANY_CURRENCY_SIGN:
-                return self._try_post_currency()
+            try:
+                last_opcode = self._rows_infos.get_unique_last_opcode()
+            except ValueError:
+                try:
+                    last_opcodes = self._rows_infos.get_two_uniques_last_opcodes()
+                except ValueError:
+                    return TextDescription.INSTANCE
+                else:
+                    return self._sniff_one_first_two_last(first_opcode,
+                                                          last_opcodes)
+            else:
+                return self._sniff_one_first_one_last(first_opcode, last_opcode)
 
-        return TextDescription()
+    def _sniff_one_first_one_last(self, first_opcode: OpCode,
+                                  last_opcode: OpCode) -> FieldDescription:
+        if last_opcode == OpCode.NUMBER:
+            if first_opcode == OpCode.NUMBER:
+                return self._try_float_or_integer()
+            elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
+                return self._try_pre_percentage()
+            elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
+                return self._try_pre_currency()
+            else:
+                return TextDescription.INSTANCE
+        elif last_opcode == OpCode.ANY_PERCENTAGE_SIGN:
+            return self._try_post_percentage()
+        elif last_opcode == OpCode.ANY_CURRENCY_SIGN:
+            return self._try_post_currency()
+        else:
+            return TextDescription.INSTANCE
+
+    def _sniff_one_first_two_last(self, first_opcode: OpCode,
+                                  last_opcodes: Collection[OpCode]
+                                  ) -> FieldDescription:
+        if (set(last_opcodes) <= {
+            OpCode.NUMBER,
+            OpCode.ANY_NUMBER_SEPARATOR,
+            OpCode.ANY_DATE_OR_NUMBER_SEPARATOR
+        }):
+            if first_opcode == OpCode.NUMBER:
+                return self._try_float_or_integer()  # just try float?
+            elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
+                return self._try_pre_percentage()
+            elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
+                return self._try_pre_currency()
+            else:
+                return TextDescription.INSTANCE
+        else:
+            return TextDescription.INSTANCE
 
     def _try_float_or_integer(self) -> FieldDescription:
         return FloatParser(self._token_rows, self._threshold).sniff()
