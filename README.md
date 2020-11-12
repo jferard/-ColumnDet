@@ -7,7 +7,7 @@ License: GPLv3
 # Overview
 Use ColumnDet to guess the type of a column in a CSV file. ColumnDet uses some 
 simple and previsible methods to guess the column type (no AI). The type has to 
-be valdiated by a human.
+be validated by a human.
 
 ## Column types
 * `bool` : a boolean
