@@ -28,6 +28,9 @@ class ColumnDetTest(unittest.TestCase):
         parser = Parser.create()
         self.assertEqual("text", str(parser.parse(["entrée"] * 100)))
 
+    def test2(self):
+        parser = Parser.create()
+        self.assertEqual("text", str(parser.parse(["64214_0010_00700"] * 100)))
 
 if __name__ == '__main__':
     unittest.main()

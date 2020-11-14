@@ -18,6 +18,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import collections
+import string
 from typing import List
 
 from columndet import OpCode, FieldDescription
@@ -37,11 +38,11 @@ class FloatParser:
 
     def sniff(self) -> FieldDescription:
         for row in self._token_rows:
-            if len(row) == 1:
+            if len(row) <= 1:
                 continue
             self._sniff_row(row)
         if 1 - self._errors / len(self._token_rows) < self._threshold:
-            pass  # raise ValueError(f"Errors: {self._errors} out of {len(self._token_rows)}")
+            raise ValueError(f"Errors: {self._errors} out of {len(self._token_rows)}")
 
         try:
             thousands_sep = get_unique(self._other_sep, self._threshold)
@@ -51,18 +52,18 @@ class FloatParser:
         dec_seps = get_some(self._last_sep, 2, self._threshold)
         if dec_seps:
             dec_sep = dec_seps[0]
-            if thousands_sep is None and len(
-                    dec_seps) == 1 and dec_sep == ".":  # !!
-                if self._prefer_dot_as_decimal_separator:
-                    return FloatDescription(thousands_sep, dec_sep)
-                else:
+            if thousands_sep is None and len(dec_seps) == 1:
+                if dec_sep == ".":  # !!
+                    if not self._prefer_dot_as_decimal_separator:
+                        return IntegerDescription(dec_sep)
+                elif dec_sep.isspace():
                     return IntegerDescription(dec_sep)
-            else:
-                return FloatDescription(thousands_sep, dec_sep)
         elif thousands_sep is not None:
             return IntegerDescription(thousands_sep)
         else:
             return IntegerDescription()
+
+        return FloatDescription(thousands_sep, dec_sep)
 
     def _sniff_row(self, row: TokenRow):
         row = self._store_last_sep(row)
@@ -74,8 +75,7 @@ class FloatParser:
         if row.last_opcode == OpCode.NUMBER:
             row.pop()  # remove number
         assert row
-        if (row.last_opcode == OpCode.ANY_NUMBER_SEPARATOR
-                or row.last_opcode == OpCode.ANY_DATE_OR_NUMBER_SEPARATOR):
+        if (row.last_opcode in (OpCode.ANY_NUMBER_SEPARATOR, OpCode.SPACE, OpCode.ANY_DATE_OR_NUMBER_SEPARATOR)):
             self._last_sep[row.last_text] += 1  # store the value
             row.pop()  # remove value
         else:
@@ -89,7 +89,7 @@ class FloatParser:
             if row.last_opcode != OpCode.NUMBER:
                 self._errors += 1
                 return
-            elif row and len(row.last_text) != 3:
+            elif len(row) > 1 and len(row.last_text) != 3:
                 self._errors += 1
                 return
             elif len(row) <= 1:

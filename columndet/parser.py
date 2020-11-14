@@ -103,12 +103,18 @@ class Parser:
         try:
             unique_size = rows_infos.get_unique_size()
         except ValueError:
-            return self._parse_unsized(rows_infos, non_empty_token_rows)
+            try:
+                return self._parse_unsized(rows_infos, non_empty_token_rows)
+            except ValueError:
+                return TextDescription.INSTANCE
         else:
             try:
                 return self._parse_sized(unique_size, non_empty_token_rows)
             except ValueError:
-                return self._parse_unsized(rows_infos, non_empty_token_rows)
+                try:
+                    return self._parse_unsized(rows_infos, non_empty_token_rows)
+                except ValueError:
+                    return TextDescription.INSTANCE
 
     def _parse_sized(self, row_size: int,
                      non_empty_token_rows: Collection[TokenRow]

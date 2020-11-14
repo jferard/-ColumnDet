@@ -24,7 +24,7 @@ from pathlib import Path
 from columndet.parser import Parser
 
 
-class DateDetTest(unittest.TestCase):
+class FixtureTest(unittest.TestCase):
     def test_boolean(self):
         self.helper_test_dir("fixtures/bool")
 
@@ -63,7 +63,7 @@ class DateDetTest(unittest.TestCase):
             parser = Parser.create()
         with p.open("r", encoding='utf-8') as source:
             print(p)
-            expected = next(source).strip()
+            expected = next(source).strip("\n")
             self.assertEqual(expected, str(parser.parse(source)))
 
 

@@ -60,7 +60,7 @@ data,col/8/type,integer
         self.maxDiff = None
         meta_csv_data = csv_det("fixtures/csv/20201001-bal-216402149.csv")
         self.assertEqual(
-            ['integer',
+            ['text',
              'text',
              'text',
              'integer',
@@ -84,7 +84,6 @@ data,col/8/type,integer
 file,encoding,UTF-8-SIG
 csv,delimiter,;
 csv,double_quote,false
-data,col/0/type,integer
 data,col/3/type,integer
 data,col/7/type,float//.
 data,col/8/type,float//.
