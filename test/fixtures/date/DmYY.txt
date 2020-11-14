@@ -1,4 +1,4 @@
-date/DD mon YY/ngz_CG
+date/dd mon yy/ngz_CG
 26 sept. 40
 30 nov. 21
 10 oct. 04

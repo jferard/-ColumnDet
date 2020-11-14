@@ -60,6 +60,9 @@ class DateDescription(FieldDescription):
         else:
             return f"date/{self._date_format}/{self._locale_name}"
 
+    def __repr__(self):
+        return f"DateDescription({repr(self._date_format)}, {repr(self._locale_name)})"
+
 
 class DatetimeDescription(FieldDescription):
     def __init__(self, date_format: str, locale_name: Optional[str]):

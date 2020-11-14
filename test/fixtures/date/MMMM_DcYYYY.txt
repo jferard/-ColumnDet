@@ -1,4 +1,4 @@
-date/month DD, YYYY/en_US
+date/month dd, yyyy/en_US
 September 26, 2040
 November 30, 2021
 October 10, 2004

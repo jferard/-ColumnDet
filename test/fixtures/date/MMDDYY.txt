@@ -1,4 +1,4 @@
-date/MMDDYY
+date/MMddyy
 092640
 113021
 101004

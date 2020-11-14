@@ -1,4 +1,4 @@
-date/day DD month YYYY/ngz_CG
+date/day dd month yyyy/ngz_CG
 mercredi 26 septembre 2040
 mardi 30 novembre 2021
 dimanche 10 octobre 2004

@@ -23,7 +23,7 @@ from columndet.tool import csv_det
 
 
 class ToolTest(unittest.TestCase):
-    def test_tool(self):
+    def test_tool1(self):
         self.maxDiff = None
         meta_csv_data = csv_det("fixtures/csv/synthese-fra.csv")
         self.assertEqual(
@@ -54,6 +54,42 @@ data,col/5/type,integer
 data,col/6/type,integer
 data,col/7/type,integer
 data,col/8/type,integer
+""".replace("\n", "\r\n"), out.getvalue())
+
+    def test_tool2(self):
+        self.maxDiff = None
+        meta_csv_data = csv_det("fixtures/csv/20201001-bal-216402149.csv")
+        self.assertEqual(
+            ['integer',
+             'text',
+             'text',
+             'integer',
+             'text',
+             'text',
+             'text',
+             'float//.',
+             'float//.',
+             'text',
+             'float//.',
+             'text',
+             'date/yyyy-MM-dd',
+             'text',
+             'text',
+             'text'],
+            meta_csv_data.field_descriptions)
+        out = io.StringIO()
+        meta_csv_data.write(out)
+
+        self.assertEqual("""domain,key,value
+file,encoding,UTF-8-SIG
+csv,delimiter,;
+csv,double_quote,false
+data,col/0/type,integer
+data,col/3/type,integer
+data,col/7/type,float//.
+data,col/8/type,float//.
+data,col/10/type,float//.
+data,col/12/type,date/yyyy-MM-dd
 """.replace("\n", "\r\n"), out.getvalue())
 
 

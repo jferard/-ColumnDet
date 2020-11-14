@@ -84,7 +84,7 @@ class MetaCSVData:
             writer.writerow(
                 ["file", "line_terminator", self.dialect.lineterminator])
         if not minimal or self.dialect.delimiter != ",":
-            writer.writerow(["csv", "delimiter", ","])
+            writer.writerow(["csv", "delimiter", self.dialect.delimiter])
         if not minimal or not self.dialect.doublequote:
             writer.writerow(["csv", "double_quote", str(
                 bool(self.dialect.skipinitialspace)).lower()])
@@ -122,7 +122,7 @@ def csv_det(path: Union[str, Path], chunk_size=1024 * 1024,
         data_str = data.decode(encoding, errors='ignore')
         dialect = csv.Sniffer().sniff(data_str)
 
-        reader = csv.reader(io.StringIO(data_str))
+        reader = csv.reader(io.StringIO(data_str), dialect)
         header = next(reader)
         parser = Parser.create(threshold=threshold,
                                prefer_dot_as_decimal_separator=

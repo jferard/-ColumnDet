@@ -1,4 +1,4 @@
-date/YYMMDD
+date/yyMMdd
 400926
 211130
 041010

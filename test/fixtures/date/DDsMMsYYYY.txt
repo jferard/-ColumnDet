@@ -1,4 +1,4 @@
-date/DD\/MM\/YYYY
+date/dd\/MM\/yyyy
 26/09/2040
 30/11/2021
 10/10/2004

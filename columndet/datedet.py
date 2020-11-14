@@ -53,7 +53,7 @@ class DateSniffer:
 
     def __init__(self, ymd_col_type_sniffer: "YMDColumnTypeSniffer",
                  hms_col_type_sniffer: "HMSColumnTypeSniffer",
-                 token_rows: List[TokenRow], threshold: float, locale_names: Optional[List[LocaleType]] = None):
+                 token_rows: List[TokenRow], threshold: float):
         self._seen_datecodes = set()
         self._ymd_col_type_sniffer = ymd_col_type_sniffer
         self._hms_col_type_sniffer = hms_col_type_sniffer
@@ -101,6 +101,8 @@ class DateSniffer:
         ret_date_parts = self._fix_types(ret_date_parts)
         counter = collections.Counter(
             t for t in ret_date_parts if t.datecode != DateCode.TEXT)
+        if not counter:
+            raise ValueError("Only text")
         if any(v > 1 for v in counter.values()):
             raise ValueError(str(counter))
         counter = collections.Counter(t.datecode for t in ret_date_parts if

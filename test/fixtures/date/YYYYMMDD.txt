@@ -1,4 +1,4 @@
-date/YYYYMMDD
+date/yyyyMMdd
 20400926
 20211130
 20041010

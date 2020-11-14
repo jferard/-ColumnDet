@@ -21,7 +21,8 @@
 import collections
 from typing import Set
 
-from columndet.field_description import FieldDescription, BooleanDescription
+from columndet.field_description import FieldDescription, BooleanDescription, \
+    TextDescription
 from columndet.i18n import TRUE_FALSE_BY_LOCALE_NAME
 from columndet.util import get_some
 
@@ -39,5 +40,7 @@ class BooleanSniffer:
             for locale_name, locale_t_f in TRUE_FALSE_BY_LOCALE_NAME.items():
                 if set(t_f) <= set(locale_t_f):
                     return BooleanDescription(*locale_t_f)
+
+            raise ValueError()
         else:
             raise ValueError("Empty int_values")  # should not happen

@@ -1,4 +1,4 @@
-date/DDMMYYYY
+date/ddMMyyyy
 26092040
 30112021
 10102004
