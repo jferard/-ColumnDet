@@ -27,7 +27,7 @@ class ToolTest(unittest.TestCase):
         self.maxDiff = None
         meta_csv_data = csv_det("fixtures/csv/synthese-fra.csv")
         self.assertEqual(
-            ['date/YYYY-MM-DD',
+            ['date/yyyy-MM-dd',
              'integer',
              'integer',
              'integer',
@@ -45,7 +45,7 @@ class ToolTest(unittest.TestCase):
         self.assertEqual("""domain,key,value
 file,encoding,ascii
 csv,double_quote,false
-data,col/0/type,date/YYYY-MM-DD
+data,col/0/type,date/yyyy-MM-dd
 data,col/1/type,integer
 data,col/2/type,integer
 data,col/3/type,integer

@@ -195,15 +195,15 @@ class YMDColumnTypeSniffer:
         values = set(map(int, values))
         max_value = max(values)
         if 0 in values:
-            return DatePart(DateCode.YEAR_PART2, 'Y' * size, None)
+            return DatePart(DateCode.YEAR_PART2, 'y' * size, None)
         if len(values.symmetric_difference({18, 19, 20, 21})) <= 3:
-            return DatePart(DateCode.YEAR_PART1, 'Y' * size, None)
+            return DatePart(DateCode.YEAR_PART1, 'y' * size, None)
         if values <= {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}:
             return DatePart(DateCode.MONTH, 'MM', None)
         if max_value > 31:
-            return DatePart(DateCode.YEAR_PART2, 'Y' * size, None)
+            return DatePart(DateCode.YEAR_PART2, 'y' * size, None)
         if max_value > 12:
-            return DatePart(DateCode.DAY, 'DD', None)
+            return DatePart(DateCode.DAY, 'dd', None)
 
         raise ValueError
 
@@ -217,11 +217,11 @@ class YMDColumnTypeSniffer:
                 return self._day_or_month(min_value, max_value)
         else:
             if size == 4:
-                return DatePart(DateCode.YEAR, 'YYYY', None)
+                return DatePart(DateCode.YEAR, 'yyyy', None)
             elif size == 2:
                 min_value, max_value = self._get_min_max(values)
                 if min_value == 0 or max_value > 31:
-                    return DatePart(DateCode.YEAR, 'YY', None)
+                    return DatePart(DateCode.YEAR, 'yy', None)
                 else:
                     return self._day_or_month(min_value, max_value)
         raise ValueError
@@ -234,7 +234,7 @@ class YMDColumnTypeSniffer:
         if 1 <= m <= M <= 12:
             return DatePart(DateCode.MONTH, 'MM', None)
         elif 12 < M <= 31:
-            return DatePart(DateCode.DAY, 'DD', None)
+            return DatePart(DateCode.DAY, 'dd', None)
         else:
             raise ValueError
 
