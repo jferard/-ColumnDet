@@ -69,7 +69,7 @@ data,col/8/type,integer
              'text',
              'float//.',
              'float//.',
-             'text',
+             'float//.',
              'float//.',
              'text',
              'date/yyyy-MM-dd',
@@ -87,6 +87,7 @@ csv,double_quote,false
 data,col/3/type,integer
 data,col/7/type,float//.
 data,col/8/type,float//.
+data,col/9/type,float//.
 data,col/10/type,float//.
 data,col/12/type,date/yyyy-MM-dd
 """.replace("\n", "\r\n"), out.getvalue())

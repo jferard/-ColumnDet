@@ -18,7 +18,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import collections
-from typing import (Optional, List, Collection, Counter)
+from typing import (Optional, List, Collection, Counter, Callable)
 
 from columndet import (ColumnInfos, OpCode, YMDBlockSniffer, HMSBlockSniffer,
                        FieldDescription, DateSniffer)
@@ -29,8 +29,10 @@ from columndet.field_description import (CurrencyDescription,
                                          PercentageDescription,
                                          BooleanDescription, TextDescription)
 from columndet.floatdet import FloatParser
+from columndet.i18n import DECIMAL_SEPARATORS, PERCENTAGE_SIGNS, \
+    CURRENCY_SYMBOLS, CURRENCY_CODES
 from columndet.lexer import (Lexer)
-from columndet.util import (get_unique, get_some, TokenRow)
+from columndet.util import (get_unique, get_some, TokenRow, Token)
 
 
 class RowsInfos:
@@ -41,11 +43,14 @@ class RowsInfos:
             [row.first_opcode for row in non_empty_token_rows])
         last_opcodes = collections.Counter(
             [row.last_opcode for row in non_empty_token_rows])
-        return RowsInfos(sizes, first_opcodes, last_opcodes, threshold)
+        return RowsInfos(non_empty_token_rows, sizes, first_opcodes,
+                         last_opcodes, threshold)
 
-    def __init__(self, sizes: Counter[int],
+    def __init__(self, non_empty_token_rows: List[TokenRow],
+                 sizes: Counter[int],
                  first_opcodes: Counter[OpCode],
                  last_opcodes: Counter[OpCode], threshold: float):
+        self._non_empty_token_rows = non_empty_token_rows
         self.sizes = sizes
         self.first_opcodes = first_opcodes
         self.last_opcodes = last_opcodes
@@ -66,6 +71,14 @@ class RowsInfos:
 
     def get_unique_first_opcode(self):
         return get_unique(self.first_opcodes, self._threshold)
+
+    def first_matches(self, func: Callable[[Token], bool]) -> bool:
+        count = sum(1 for tr in self._non_empty_token_rows if func(tr.first()))
+        return count > self._threshold * len(self._non_empty_token_rows)
+
+    def last_matches(self, func: Callable[[Token], bool]) -> bool:
+        count = sum(1 for tr in self._non_empty_token_rows if func(tr.last()))
+        return count > self._threshold * len(self._non_empty_token_rows)
 
 
 class Parser:
@@ -120,7 +133,7 @@ class Parser:
                      non_empty_token_rows: Collection[TokenRow]
                      ) -> FieldDescription:
         # col bet: bool, date, datetime *are* sized
-        # (_currency, integer, float, _text, percentage *may be* sized)
+        # (currency, integer, float, _text, percentage *may be* sized)
         valid_token_rows = [r for r in non_empty_token_rows if
                             len(r) == row_size]
         if not valid_token_rows:
@@ -198,8 +211,8 @@ class OneColumnSniffer:
 
 class UnsizedColumnSniffer:
     """
-    A sniffer. Try to find the date_format of a sized field: a _currency, a float,
-    an integer, a percentage or some _text.
+    A sniffer. Try to find the date_format of an unsized sized field:
+     currency, a float, an integer, a percentage or some text.
     """
 
     def __init__(self, rows_infos: RowsInfos,
@@ -211,58 +224,26 @@ class UnsizedColumnSniffer:
         self._prefer_dot_as_decimal_separator = prefer_dot_as_decimal_separator
 
     def sniff(self) -> FieldDescription:
-        try:
-            first_opcode = self._rows_infos.get_unique_first_opcode()
-        except ValueError:
-            return TextDescription.INSTANCE
-        else:
-            try:
-                last_opcode = self._rows_infos.get_unique_last_opcode()
-            except ValueError:
-                try:
-                    last_opcodes = self._rows_infos.get_two_uniques_last_opcodes()
-                except ValueError:
-                    return TextDescription.INSTANCE
-                else:
-                    return self._sniff_one_first_two_last(first_opcode,
-                                                          last_opcodes)
-            else:
-                return self._sniff_one_first_one_last(first_opcode, last_opcode)
-
-    def _sniff_one_first_one_last(self, first_opcode: OpCode,
-                                  last_opcode: OpCode) -> FieldDescription:
-        if last_opcode == OpCode.NUMBER:
-            if first_opcode == OpCode.NUMBER:
+        if self._rows_infos.last_matches(lambda t: (
+                t.opcode == OpCode.NUMBER or t.text in DECIMAL_SEPARATORS)):
+            if self._rows_infos.first_matches(
+                    lambda t: t.opcode == OpCode.NUMBER or t.text in {"-",
+                                                                      "+"}):
                 return self._try_float_or_integer()
-            elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
+            elif self._rows_infos.first_matches(
+                    lambda t: t.text in PERCENTAGE_SIGNS):
                 return self._try_pre_percentage()
-            elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
+            elif self._rows_infos.first_matches(lambda t: (
+                    t.text in CURRENCY_SYMBOLS or t.text in CURRENCY_CODES)):
                 return self._try_pre_currency()
             else:
                 return TextDescription.INSTANCE
-        elif last_opcode == OpCode.ANY_PERCENTAGE_SIGN:
+        elif self._rows_infos.last_matches(
+                lambda t: t.text in PERCENTAGE_SIGNS):
             return self._try_post_percentage()
-        elif last_opcode == OpCode.ANY_CURRENCY_SIGN:
+        elif self._rows_infos.last_matches(lambda t: (
+                t.text in CURRENCY_SYMBOLS or t.text in CURRENCY_CODES)):
             return self._try_post_currency()
-        else:
-            return TextDescription.INSTANCE
-
-    def _sniff_one_first_two_last(self, first_opcode: OpCode,
-                                  last_opcodes: Collection[OpCode]
-                                  ) -> FieldDescription:
-        if (set(last_opcodes) <= {
-            OpCode.NUMBER,
-            OpCode.ANY_NUMBER_SEPARATOR,
-            OpCode.ANY_DATE_OR_NUMBER_SEPARATOR
-        }):
-            if first_opcode == OpCode.NUMBER:
-                return self._try_float_or_integer()  # just try float?
-            elif first_opcode == OpCode.ANY_PERCENTAGE_SIGN:
-                return self._try_pre_percentage()
-            elif first_opcode == OpCode.ANY_CURRENCY_SIGN:
-                return self._try_pre_currency()
-            else:
-                return TextDescription.INSTANCE
         else:
             return TextDescription.INSTANCE
 
@@ -272,15 +253,17 @@ class UnsizedColumnSniffer:
 
     def _try_pre_percentage(self):
         sign = self._get_pre()
-        rows = [row.lstrip(OpCode.ANY_PERCENTAGE_SIGN, OpCode.SPACE)
-                for row in self._token_rows]
+        rows = [row.lstrip(
+            lambda t: (t.opcode == OpCode.SPACE or t.text in PERCENTAGE_SIGNS))
+            for row in self._token_rows]
         float_description = FloatParser(rows, self._threshold,
                                         self._prefer_dot_as_decimal_separator).sniff()
         return PercentageDescription(True, sign, float_description)
 
     def _try_pre_currency(self):
         currency = self._get_pre()
-        rows = [row.lstrip(OpCode.ANY_CURRENCY_SIGN, OpCode.SPACE)
+        rows = [row.lstrip(lambda t: (
+                t.opcode == OpCode.SPACE or t.text in CURRENCY_SYMBOLS or t.text in CURRENCY_CODES))
                 for row in self._token_rows]
         float_description = FloatParser(rows, self._threshold,
                                         self._prefer_dot_as_decimal_separator).sniff()
@@ -298,15 +281,17 @@ class UnsizedColumnSniffer:
 
     def _try_post_percentage(self):
         sign = self._get_post()
-        rows = [row.rstrip(OpCode.ANY_PERCENTAGE_SIGN, OpCode.SPACE)
-                for row in self._token_rows]
+        rows = [row.rstrip(
+            lambda t: (t.opcode == OpCode.SPACE or t.text in PERCENTAGE_SIGNS))
+            for row in self._token_rows]
         float_description = FloatParser(rows, self._threshold,
                                         self._prefer_dot_as_decimal_separator).sniff()
         return PercentageDescription(False, sign, float_description)
 
     def _try_post_currency(self):
         currency = self._get_post()
-        rows = [row.rstrip(OpCode.ANY_CURRENCY_SIGN, OpCode.SPACE)
+        rows = [row.rstrip(lambda t: (
+                t.opcode == OpCode.SPACE or t.text in CURRENCY_SYMBOLS or t.text in CURRENCY_CODES))
                 for row in self._token_rows]
         float_description = FloatParser(rows, self._threshold,
                                         self._prefer_dot_as_decimal_separator).sniff()

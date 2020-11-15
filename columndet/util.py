@@ -62,23 +62,8 @@ class OpCode(Enum):
     NUMBER = 1
     SPACE = 2
     TEXT = 3
-
-    ANY_DATE_SEPARATOR = 4
-    ANY_NUMBER_SEPARATOR = 5
-    ANY_CURRENCY_SIGN = 6
-    ANY_PERCENTAGE_SIGN = 7
-    ANY_DATE_OR_NUMBER_SEPARATOR = 8
-
-    THOUSANDS_SEPARATOR = 107
-    DECIMAL_SEPARATOR = 108
-
-    UNK = 10
-
-    BOOLEAN = 1000
-    FLOAT = 1001
-    INTEGER = 1002
-    CURRENCY = 1003
-    PERCENTAGE = 1004
+    PUNCTUATION = 4
+    OPERATOR = 5
 
 
 Token = collections.namedtuple('Token', ['opcode', 'text'])
@@ -115,15 +100,15 @@ class TokenRow(Iterable[Token], Sized):
         assert len(self._tokens) == 1
         return self._tokens[0]
 
-    def lstrip(self, *opcodes: OpCode) -> "TokenRow":
+    def lstrip(self, func: Callable[[Token], bool]) -> "TokenRow":
         i = 0
-        while i < len(self._tokens) and self._tokens[i].opcode in opcodes:
+        while i < len(self._tokens) and func(self._tokens[i]):
             i += 1
         return TokenRow(self._tokens[i:])
 
-    def rstrip(self, *opcodes: OpCode) -> "TokenRow":
+    def rstrip(self, func: Callable[[Token], bool]) -> "TokenRow":
         i = len(self._tokens)
-        while i > 0 and self._tokens[i - 1].opcode in opcodes:
+        while i > 0 and func(self._tokens[i - 1]):
             i -= 1
         return TokenRow(self._tokens[:i])
 
@@ -131,6 +116,17 @@ class TokenRow(Iterable[Token], Sized):
         ret = self._tokens[-1]
         self._tokens = self._tokens[:-1]
         return ret
+
+    def shift(self) -> Token:
+        ret = self._tokens[0]
+        self._tokens = self._tokens[1:]
+        return ret
+
+    def first(self) -> Token:
+        return self._tokens[0]
+
+    def last(self) -> Token:
+        return self._tokens[-1]
 
 
 class ColumnInfos:

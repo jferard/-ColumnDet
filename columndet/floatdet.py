@@ -23,6 +23,7 @@ from typing import List
 
 from columndet import OpCode, FieldDescription
 from columndet.field_description import FloatDescription, IntegerDescription
+from columndet.i18n import NUMBER_SEPARATORS
 from columndet.util import (get_unique, get_some, TokenRow)
 
 
@@ -66,6 +67,8 @@ class FloatParser:
         return FloatDescription(thousands_sep, dec_sep)
 
     def _sniff_row(self, row: TokenRow):
+        if row.first_text == "-":
+            row.shift()
         row = self._store_last_sep(row)
         self._store_other_sep(row)
 
@@ -75,7 +78,7 @@ class FloatParser:
         if row.last_opcode == OpCode.NUMBER:
             row.pop()  # remove number
         assert row
-        if (row.last_opcode in (OpCode.ANY_NUMBER_SEPARATOR, OpCode.SPACE, OpCode.ANY_DATE_OR_NUMBER_SEPARATOR)):
+        if row.last_text in NUMBER_SEPARATORS:
             self._last_sep[row.last_text] += 1  # store the value
             row.pop()  # remove value
         else:
@@ -96,9 +99,6 @@ class FloatParser:
                 return
             row.pop()  # remove number
 
-            if (row.last_opcode == OpCode.ANY_NUMBER_SEPARATOR
-                    or row.last_opcode == OpCode.ANY_DATE_OR_NUMBER_SEPARATOR):
+            if row.last_text in NUMBER_SEPARATORS:
                 self._other_sep[row.last_text] += 1
-            elif row.last_opcode == OpCode.SPACE:
-                self._other_sep[' '] += 1
             row.pop()  # remove value

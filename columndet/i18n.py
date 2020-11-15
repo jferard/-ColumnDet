@@ -196,9 +196,15 @@ TRUE_FALSE_BY_LOCALE_NAME = {
     'zh_TW': ('真', '假'),
 }
 
-NUMBER_SEPARATORS = {
-    ',', '.', '\xa0', '٫', '٬', "'"
+THOUSANDS_SEPARATORS = {
+    ',', '.', '\xa0', ' '
 }
+
+DECIMAL_SEPARATORS = {
+    ',', '.', '٫', '٬', "'"
+}
+
+NUMBER_SEPARATORS = THOUSANDS_SEPARATORS | DECIMAL_SEPARATORS
 
 DATETIME_SEPARATORS = {
     ':', '/', '.', '-'

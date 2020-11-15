@@ -72,7 +72,7 @@ class DateSniffer:
                 pass
             else:
                 if t.opcode != OpCode.NUMBER:
-                    if ((t.text == "+" or t.text == "-")
+                    if (t.opcode == OpCode.OPERATOR and (t.text == "+" or t.text == "-")
                             and self._ymd_known() and self._hms_known()):
                         ret_date_parts.append(
                             DatePart(DateCode.TEXT, "TZ", None))
@@ -92,7 +92,7 @@ class DateSniffer:
 
             if date_part is None:
                 date_part = DatePart(DateCode.TEXT,
-                                     tokens_col.non_null_tokens[0].text, None)
+                                     tokens_col.non_null_tokens.first_text, None)
             else:
                 self._seen_datecodes.add(date_part.datecode)
 
