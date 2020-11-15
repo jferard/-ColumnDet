@@ -80,10 +80,6 @@ class TokenRow(Iterable[Token], Sized):
         return iter(self._tokens)
 
     @property
-    def first_opcode(self) -> OpCode:
-        return self._tokens[0].opcode
-
-    @property
     def first_text(self) -> str:
         return self._tokens[0].text
 
@@ -209,11 +205,3 @@ class ColumnInfos:
         second = ColumnInfos(TokenRow(tokens), TokenRow(non_null_tokens),
                              self._threshold)
         return first, second
-
-
-class LocalesWrapper:
-    def __init__(self, locale_names: Optional[Sequence[LocaleType]]):
-        self._locale_names = locale_names
-
-    def match(self, locale_name):
-        pass

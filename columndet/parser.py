@@ -39,21 +39,13 @@ class RowsInfos:
     @staticmethod
     def create(non_empty_token_rows: List[TokenRow], threshold: float):
         sizes = collections.Counter([len(row) for row in non_empty_token_rows])
-        first_opcodes = collections.Counter(
-            [row.first_opcode for row in non_empty_token_rows])
-        last_opcodes = collections.Counter(
-            [row.last_opcode for row in non_empty_token_rows])
-        return RowsInfos(non_empty_token_rows, sizes, first_opcodes,
-                         last_opcodes, threshold)
+        return RowsInfos(non_empty_token_rows, sizes, threshold)
 
     def __init__(self, non_empty_token_rows: List[TokenRow],
                  sizes: Counter[int],
-                 first_opcodes: Counter[OpCode],
-                 last_opcodes: Counter[OpCode], threshold: float):
+                 threshold: float):
         self._non_empty_token_rows = non_empty_token_rows
         self.sizes = sizes
-        self.first_opcodes = first_opcodes
-        self.last_opcodes = last_opcodes
         self._threshold = threshold
 
     def get_unique_size(self) -> int:
@@ -62,15 +54,6 @@ class RowsInfos:
         :raise ValueError: if this unique size does not exist.
         """
         return get_unique(self.sizes, self._threshold)
-
-    def get_unique_last_opcode(self):
-        return get_unique(self.last_opcodes, self._threshold)
-
-    def get_two_uniques_last_opcodes(self):
-        return get_some(self.last_opcodes, 2, self._threshold)
-
-    def get_unique_first_opcode(self):
-        return get_unique(self.first_opcodes, self._threshold)
 
     def first_matches(self, func: Callable[[Token], bool]) -> bool:
         count = sum(1 for tr in self._non_empty_token_rows if func(tr.first()))
