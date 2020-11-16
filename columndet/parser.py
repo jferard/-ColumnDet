@@ -27,7 +27,8 @@ from columndet.datedet import (YMDColumnTypeSniffer, HMSColumnTypeSniffer,
                                DateFieldDescriptionFactory)
 from columndet.field_description import (CurrencyDescription,
                                          PercentageDescription,
-                                         BooleanDescription, TextDescription)
+                                         BooleanDescription, TextDescription,
+                                         IntegerDescription)
 from columndet.floatdet import FloatParser
 from columndet.i18n import DECIMAL_SEPARATORS, PERCENTAGE_SIGNS, \
     CURRENCY_SYMBOLS, CURRENCY_CODES
@@ -157,16 +158,28 @@ class OneColumnSniffer:
         self._date_field_factory = DateFieldDescriptionFactory()
 
     def sniff(self) -> FieldDescription:
+        """
+        Return the field description of this one token-column.
+        Does not raise any exception because we can always decide the type.
+
+        :return: the field description
+        """
         rows = [tr.only for tr in self._token_rows]
         tokens_col = ColumnInfos.create(TokenRow(rows), None, self._threshold)
         opcode = tokens_col.unique_opcode
         if opcode == OpCode.NUMBER:
-            out_tokens = self._sniff_dateblock_or_bool_01(tokens_col)
+            try:
+                description = self._sniff_dateblock_or_bool_01(tokens_col)
+            except ValueError:
+                description = IntegerDescription.INSTANCE
         elif opcode == OpCode.TEXT:
-            out_tokens = self._sniff_bool_literal(tokens_col)
+            try:
+                description = self._sniff_bool_literal(tokens_col)
+            except ValueError:
+                description = TextDescription.INSTANCE
         else:
-            raise ValueError()
-        return out_tokens
+            description = TextDescription.INSTANCE
+        return description
 
     def _sniff_dateblock_or_bool_01(self,
                                     first: ColumnInfos) -> FieldDescription:

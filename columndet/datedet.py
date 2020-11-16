@@ -76,7 +76,7 @@ class DateSniffer:
                             and self._ymd_known() and self._hms_known()):
                         ret_date_parts.append(
                             DatePart(DateCode.TEXT, "TZ", None))
-                        break
+                        break # TODO: could do better
                     else:
                         ret_date_parts.append(
                             DatePart(DateCode.TEXT, t.text, None))

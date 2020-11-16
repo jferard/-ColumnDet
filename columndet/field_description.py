@@ -97,6 +97,9 @@ class IntegerDescription(FieldDescription):
             return f"integer/{self._none_to_empty(self._thousand_sep)}"
 
 
+IntegerDescription.INSTANCE = IntegerDescription()
+
+
 class PercentageDescription(FieldDescription):
     def __init__(self, pre: bool, sign: Optional[str],
                  float_description: FieldDescription):

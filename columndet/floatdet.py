@@ -62,7 +62,7 @@ class FloatParser:
         elif thousands_sep is not None:
             return IntegerDescription(thousands_sep)
         else:
-            return IntegerDescription()
+            return IntegerDescription.INSTANCE
 
         return FloatDescription(thousands_sep, dec_sep)
 
