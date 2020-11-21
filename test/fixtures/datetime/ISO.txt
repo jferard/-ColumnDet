@@ -1,4 +1,4 @@
-datetime/yyyy-MM-ddTHH:MI:SS,mmmmTZ
+datetime/yyyy-MM-dd'T'HH:mm:ss,SSSSZ
 2040-09-27T01:56:40,6+2:00
 2021-11-30T07:06:10,4+2:00
 2004-10-10T12:51:39,7+1:00

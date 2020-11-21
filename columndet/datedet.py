@@ -72,11 +72,16 @@ class DateSniffer:
                 pass
             else:
                 if t.opcode != OpCode.NUMBER:
-                    if (t.opcode == OpCode.OPERATOR and (t.text == "+" or t.text == "-")
+                    if (t.opcode == OpCode.OPERATOR and (
+                            t.text == "+" or t.text == "-")
                             and self._ymd_known() and self._hms_known()):
                         ret_date_parts.append(
-                            DatePart(DateCode.TEXT, "TZ", None))
-                        break # TODO: could do better
+                            DatePart(DateCode.TEXT, "Z", None))
+                        break  # TODO: could do better
+                    elif t.opcode == OpCode.TEXT:
+                        text = t.text.replace("'", "''")  # escape quotes
+                        ret_date_parts.append(
+                            DatePart(DateCode.TEXT, "'" + text + "'", None))
                     else:
                         ret_date_parts.append(
                             DatePart(DateCode.TEXT, t.text, None))
@@ -92,7 +97,8 @@ class DateSniffer:
 
             if date_part is None:
                 date_part = DatePart(DateCode.TEXT,
-                                     tokens_col.non_null_tokens.first_text, None)
+                                     tokens_col.non_null_tokens.first_text,
+                                     None)
             else:
                 self._seen_datecodes.add(date_part.datecode)
 
@@ -259,11 +265,11 @@ class HMSColumnTypeSniffer:
             if DateCode.MINUTES in self._seen_datecodes:
                 if DateCode.SECONDS in self._seen_datecodes:
                     if 0 <= min_v and max_v < 1000:
-                        t = DatePart(DateCode.MILLISECONDS, 'mmmm', None)
+                        t = DatePart(DateCode.MILLISECONDS, 'SSSS', None)
                 elif 0 <= min_v and max_v < 60:
-                    t = DatePart(DateCode.SECONDS, 'SS', None)
+                    t = DatePart(DateCode.SECONDS, 'ss', None)
             elif 0 <= min_v and max_v < 60:
-                t = DatePart(DateCode.MINUTES, 'MI', None)
+                t = DatePart(DateCode.MINUTES, 'mm', None)
         elif 0 <= min_v and max_v < 24:
             t = DatePart(DateCode.HOURS, 'HH', None)
 

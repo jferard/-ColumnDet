@@ -1,4 +1,4 @@
-datetime/dd\/MM\/yyyy HH:MI:SS
+datetime/dd\/MM\/yyyy HH:mm:ss
 27/09/2040 01:56:40
 30/11/2021 07:06:10
 10/10/2004 12:51:39
