@@ -29,5 +29,6 @@ class LexerTest(unittest.TestCase):
         lexer = Lexer()
         self.assertEqual([Token(OpCode.TEXT, 'entrée')], lexer.lex("entrée"))
 
+
 if __name__ == '__main__':
     unittest.main()

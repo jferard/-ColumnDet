@@ -70,6 +70,7 @@ class FixtureTest(unittest.TestCase):
         return os.path.abspath(
         os.path.join(__file__, "../fixtures", fixture_name))
 
+
 if __name__ == "__main__":
     unittest.main()
 
