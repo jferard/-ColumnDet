@@ -20,7 +20,8 @@
 
 import collections
 from enum import Enum
-from typing import (List, Optional, Sequence, Mapping, Collection, Iterable)
+from typing import (List, Optional, Sequence, Mapping, Collection, Iterable,
+                    Set)
 
 from columndet.field_description import (FieldDescription, DateDescription,
                                          DatetimeDescription)
@@ -308,6 +309,33 @@ class DateFieldDescriptionFactory:
         return "".join(d.text.replace("/", "\\/") for d in date_parts)
 
 
+Y1_RANGE = range(-15, 22)
+Y2_RANGE = range(0, 100)
+M_RANGE = range(1, 13)
+D_RANGE = range(1, 32)
+
+RANGES_BY_FORMAT = {
+    "yyyyMMdd": [Y1_RANGE, Y2_RANGE, M_RANGE, D_RANGE],
+    "ddMMyyyy": [D_RANGE, M_RANGE, Y1_RANGE, Y2_RANGE],
+    "MMddyyyy": [M_RANGE, D_RANGE, Y1_RANGE, Y2_RANGE],
+    "yyMMdd": [Y2_RANGE, M_RANGE, D_RANGE],
+    "ddMMyy": [D_RANGE, M_RANGE, Y2_RANGE],
+    "MMddyy": [M_RANGE, D_RANGE, Y2_RANGE],
+}
+
+FORMAT8_BY_PATTERN = {
+    "YMD": "yyyyMMdd",
+    "DMY": "ddMMyyyy",
+    "MDY": "MMddyyyy"
+}
+
+FORMAT6_BY_PATTERN = {
+    "YMD": "yyMMdd",
+    "DMY": "ddMMyy",
+    "MDY": "MMddyy"
+}
+
+
 class YMDBlockSniffer:
     """
     Sniff a simple column to find YYYYMMDD.
@@ -315,51 +343,62 @@ class YMDBlockSniffer:
     """
 
     def __init__(self, col_type_sniffer: YMDColumnTypeSniffer,
-                 column: ColumnInfos):
+                 column: ColumnInfos, patterns=None):
         self._col_type_sniffer = col_type_sniffer
         self._column = column
+        if patterns is None:
+            self._patterns = ["YMD", "DMY", "MDY"]
+        else:
+            self._patterns = patterns
 
-    def sniff(self) -> List[DatePart]:
+    def sniff(self) -> str:
         size = self._column.unique_width
         if size == 8:
-            return self._sniff8()
+            return self._sniff([FORMAT8_BY_PATTERN[p] for p in self._patterns])
         elif size == 6:
-            return self._sniff6()
+            return self._sniff([FORMAT6_BY_PATTERN[p] for p in self._patterns])
         else:
             raise ValueError(f"Expected at least 6 digits, got {size}")
 
-    def _sniff8(self) -> List[DatePart]:
+    def _sniff(self, formats: str) -> str:
         ds = self._column.texts
         twos = [[d[i:i + 2] for i in range(0, len(d), 2)] for d in ds]
-        two_cols = map(set, zip(*twos))
-        types = [self._col_type_sniffer.find_ymd_col_part(col) for col in
-                 two_cols]
-        return self._merge_types(types)
+        two_cols = [set(vs) for vs in zip(*twos)]
 
-    def _sniff6(self) -> List[DatePart]:
-        ds = self._column.texts
-        twos = [[d[i:i + 2] for i in range(0, len(d), 2)] for d in ds]
-        two_cols = list(map(set, zip(*twos)))
-        types = [self._col_type_sniffer.find_ymd_col_part(col) for col in
-                 two_cols]
-        return self._merge_types(types)
+        for date_format in formats:
+            ranges = RANGES_BY_FORMAT[date_format]
+            if self._match(ranges, two_cols):
+                return date_format
 
-    def _merge_types(self, ts: List[DatePart]) -> List[DatePart]:
-        parts = []
-        previous = None
-        for t in ts:
-            if t.datecode == DateCode.YEAR_PART1:
-                pass
-            elif (t.datecode == DateCode.YEAR_PART2 and previous is not None
-                  and previous.datecode == DateCode.YEAR_PART1):
-                parts.append(
-                    DatePart(DateCode.YEAR, t.text + previous.text, None))
-            elif t.datecode == DateCode.YEAR_PART2:
-                parts.append(DatePart(DateCode.YEAR, t.text, None))
-            else:
-                parts.append(t)
-            previous = t
-        return parts
+        raise ValueError()
+
+    def _match(self, ranges: List[range], value_sets: List[Set[str]]) -> bool:
+        return all(int(v) in r for r, vs in zip(ranges, value_sets) for v in vs)
+
+    # def _sniff6(self) -> List[DatePart]:
+    #     ds = self._column.texts
+    #     twos = [[d[i:i + 2] for i in range(0, len(d), 2)] for d in ds]
+    #     two_cols = list(map(set, zip(*twos)))
+    #     types = [self._col_type_sniffer.find_ymd_col_part(col) for col in
+    #              two_cols]
+    #     return self._merge_types(types)
+
+    # def _merge_types(self, ts: List[DatePart]) -> List[DatePart]:
+    #     parts = []
+    #     previous = None
+    #     for t in ts:
+    #         if t.datecode == DateCode.YEAR_PART1:
+    #             pass
+    #         elif (t.datecode == DateCode.YEAR_PART2 and previous is not None
+    #               and previous.datecode == DateCode.YEAR_PART1):
+    #             parts.append(
+    #                 DatePart(DateCode.YEAR, t.text + previous.text, None))
+    #         elif t.datecode == DateCode.YEAR_PART2:
+    #             parts.append(DatePart(DateCode.YEAR, t.text, None))
+    #         else:
+    #             parts.append(t)
+    #         previous = t
+    #     return parts
 
 
 class HMSBlockSniffer:
@@ -371,14 +410,14 @@ class HMSBlockSniffer:
     def __init__(self, column: ColumnInfos):
         self._column = column
 
-    def sniff(self) -> List[DatePart]:
+    def sniff(self) -> str:
         size = self._column.unique_width
         if size == 6:
             return self._sniff6()
         else:
             raise ValueError("Expected at least 6 digits")
 
-    def _sniff6(self) -> List[DatePart]:
+    def _sniff6(self) -> str:
         ds = self._column.texts
         hours, minutes, seconds = zip(
             *[[int(d[i:i + 2]) for i in range(0, len(d), 2)
@@ -386,8 +425,6 @@ class HMSBlockSniffer:
         if (0 <= min(hours) and max(hours) < 24 and
                 0 <= min(minutes) and max(minutes) < 60 and
                 0 <= min(seconds) and max(seconds) < 60):
-            return [DatePart(DateCode.HOURS, "HH", None),
-                    DatePart(DateCode.MINUTES, "MI", None),
-                    DatePart(DateCode.SECONDS, "SS", None)]
+            return "HHmmss"
         else:
             raise ValueError("Bad minutes")

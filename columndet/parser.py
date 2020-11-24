@@ -28,7 +28,8 @@ from columndet.datedet import (YMDColumnTypeSniffer, HMSColumnTypeSniffer,
 from columndet.field_description import (CurrencyDescription,
                                          PercentageDescription,
                                          BooleanDescription, TextDescription,
-                                         IntegerDescription)
+                                         IntegerDescription, DateDescription,
+                                         DatetimeDescription)
 from columndet.floatdet import FloatParser
 from columndet.i18n import DECIMAL_SEPARATORS, PERCENTAGE_SIGNS, \
     CURRENCY_SYMBOLS, CURRENCY_CODES
@@ -171,7 +172,15 @@ class OneColumnSniffer:
             try:
                 description = self._sniff_dateblock_or_bool_01(tokens_col)
             except ValueError:
-                description = IntegerDescription.INSTANCE
+                try:
+                    tokens_col.unique_width
+                except ValueError:
+                    description = IntegerDescription.INSTANCE
+                else:
+                    if any(t.startswith("0") for t in tokens_col.texts):
+                        description = TextDescription.INSTANCE
+                    else:
+                        description = IntegerDescription.INSTANCE
         elif opcode == OpCode.TEXT:
             try:
                 description = self._sniff_bool_literal(tokens_col)
@@ -188,15 +197,15 @@ class OneColumnSniffer:
             if first.texts <= {"0", "1"}:
                 return BooleanDescription("1", "0")
         elif width == 6 or width == 8:
-            return self._date_field_factory.create(
+            return DateDescription(
                 YMDBlockSniffer(self._ymd_col_type_sniffer,
-                                first).sniff())
+                                first).sniff(), None)
         elif width == 12 or width == 14:
             date, time = first.split_at(-6)
             sniff1 = YMDBlockSniffer(self._ymd_col_type_sniffer,
                                      date).sniff()
             sniff2 = HMSBlockSniffer(time).sniff()
-            return self._date_field_factory.create(sniff1 + sniff2)
+            return DatetimeDescription(sniff1 + sniff2, None)
 
         raise ValueError()
 
