@@ -34,6 +34,7 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import io
+import typing
 from pathlib import Path
 from typing import Union, Tuple, Optional
 
@@ -63,16 +64,20 @@ class MetaCSVData:
             else:
                 self.field_descriptions[i] = value
 
-    def write(self, path: Optional[Union[str, Path]] = None, minimal=True):
+    def write(self, path: Optional[
+        Union[str, Path, typing.TextIO, typing.BinaryIO]] = None, minimal=True):
         if isinstance(path, io.TextIOBase):
             self._write(path, minimal)
+        elif isinstance(path, (io.RawIOBase, io.BufferedIOBase)):
+            self._write(io.TextIOWrapper(path, encoding="utf-8", newline="\r\n"
+                                         ), minimal)
         else:
             if path is None:
                 path = self.path.with_suffix(".mcsv")
             elif isinstance(path, str):
                 path = Path(path)
 
-            with path.open("w", newline="") as dest:
+            with path.open("w", newline="\r\n") as dest:
                 self._write(dest, minimal)
 
     def _write(self, dest, minimal):

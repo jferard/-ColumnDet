@@ -32,6 +32,9 @@ class BooleanDescription(FieldDescription):
         self._true_word = true_word
         self._false_word = false_word
 
+    def __repr__(self):
+        return f"BooleanDescription({self._true_word}, {self._false_word})"
+
     def __str__(self):
         return f"boolean/{self._true_word}/{self._false_word}"
 

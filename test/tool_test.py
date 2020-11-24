@@ -18,6 +18,7 @@
 #
 import io
 import os
+import sys
 import unittest
 
 from columndet.tool import csv_det

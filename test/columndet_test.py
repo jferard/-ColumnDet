@@ -32,6 +32,15 @@ class ColumnDetTest(unittest.TestCase):
         parser = Parser.create()
         self.assertEqual("text", str(parser.parse(["64214_0010_00700"] * 100)))
 
+    def test3(self):
+        parser = Parser.create()
+        self.assertEqual("date/yyyyMMdd", str(parser.parse(
+            ['20200918', '20200920', '20200923', '20200927', '20200928',
+             '20201001', '20201006', '20201011', '20201016', '20201021',
+             '20201023', '20201024', '20201027', '20201028', '20201102',
+             '20201104', '20201108', '20201111', '20201113', '20201117',
+             '20201120', '20201124'])))
+
 
 if __name__ == '__main__':
     unittest.main()
