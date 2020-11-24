@@ -17,6 +17,7 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import io
+import os
 import unittest
 
 from columndet.tool import csv_det
@@ -25,7 +26,7 @@ from columndet.tool import csv_det
 class ToolTest(unittest.TestCase):
     def test_tool1(self):
         self.maxDiff = None
-        meta_csv_data = csv_det("fixtures/csv/synthese-fra.csv")
+        meta_csv_data = csv_det(self._get_fixture("csv/synthese-fra.csv"))
         self.assertEqual(
             ['date/yyyy-MM-dd',
              'integer',
@@ -58,7 +59,7 @@ data,col/8/type,integer
 
     def test_tool2(self):
         self.maxDiff = None
-        meta_csv_data = csv_det("fixtures/csv/20201001-bal-216402149.csv")
+        meta_csv_data = csv_det(self._get_fixture("csv/20201001-bal-216402149.csv"))
         self.assertEqual(
             ['text',
              'text',
@@ -92,6 +93,9 @@ data,col/10/type,float//.
 data,col/12/type,date/yyyy-MM-dd
 """.replace("\n", "\r\n"), out.getvalue())
 
+    def _get_fixture(self, fixture_name: str) -> str:
+        return os.path.abspath(
+        os.path.join(__file__, "../fixtures", fixture_name))
 
 if __name__ == '__main__':
     unittest.main()
