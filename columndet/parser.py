@@ -177,7 +177,8 @@ class OneColumnSniffer:
                 except ValueError:
                     description = IntegerDescription.INSTANCE
                 else:
-                    if any(t.startswith("0") for t in tokens_col.texts):
+                    if any(t[0] == "0" and len(t) > 1 for t in
+                           tokens_col.texts):
                         description = TextDescription.INSTANCE
                     else:
                         description = IntegerDescription.INSTANCE

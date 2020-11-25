@@ -147,7 +147,7 @@ class DateSniffer:
                 t = tokens_col.unique_token
             except ValueError:
                 t = tokens_col.non_null_tokens[0]
-            date_part = DatePart(DateCode.TEXT, t.text)
+            date_part = DatePart(DateCode.TEXT, t.text, None)
         return date_part
 
     def _fix_types(self, date_parts: List[DatePart]) -> List[DatePart]:
@@ -261,17 +261,21 @@ class HMSColumnTypeSniffer:
         assert tokens_col.unique_opcode == OpCode.NUMBER
         values = list(map(int, tokens_col.texts))
         min_v, max_v = min(values), max(values)
+        if min_v < 0:
+            raise ValueError()
         t = None
         if DateCode.HOURS in self._seen_datecodes:
             if DateCode.MINUTES in self._seen_datecodes:
                 if DateCode.SECONDS in self._seen_datecodes:
-                    if 0 <= min_v and max_v < 1000:
-                        t = DatePart(DateCode.MILLISECONDS, 'SSSS', None)
-                elif 0 <= min_v and max_v < 60:
+                    for i in range(1, 10):
+                        if max_v < 10**i:
+                            t = DatePart(DateCode.MILLISECONDS, 'S'*i, None)
+                            break
+                elif max_v < 60:
                     t = DatePart(DateCode.SECONDS, 'ss', None)
-            elif 0 <= min_v and max_v < 60:
+            elif max_v < 60:
                 t = DatePart(DateCode.MINUTES, 'mm', None)
-        elif 0 <= min_v and max_v < 24:
+        elif max_v < 24:
             t = DatePart(DateCode.HOURS, 'HH', None)
 
         if t is None:
