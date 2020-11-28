@@ -18,11 +18,11 @@
 #   You should have received a copy of the GNU General Public License
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import collections
-import string
 from typing import List
 
-from columndet import OpCode, FieldDescription
-from columndet.field_description import FloatDescription, IntegerDescription
+from columndet import OpCode
+from mcsv.meta_csv_data import (FieldDescription, FloatDescription,
+                                IntegerDescription)
 from columndet.i18n import NUMBER_SEPARATORS
 from columndet.util import (get_unique, get_some, TokenRow)
 
@@ -43,7 +43,8 @@ class FloatParser:
                 continue
             self._sniff_row(row)
         if 1 - self._errors / len(self._token_rows) < self._threshold:
-            raise ValueError(f"Errors: {self._errors} out of {len(self._token_rows)}")
+            raise ValueError(
+                f"Errors: {self._errors} out of {len(self._token_rows)}")
 
         try:
             thousands_sep = get_unique(self._other_sep, self._threshold)

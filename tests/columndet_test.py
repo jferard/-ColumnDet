@@ -19,21 +19,26 @@
 
 import unittest
 
-from columndet import YMDColumnTypeSniffer, HMSColumnTypeSniffer, DateSniffer, \
-    DateDescription
-from columndet.util import Token, OpCode, TokenRow
+from columndet.parser import Parser
 
 
-class DateDetTest(unittest.TestCase):
+class ColumnDetTest(unittest.TestCase):
     def test(self):
-        threshold = 0.95
-        ymd_col_type_sniffer = YMDColumnTypeSniffer.create(threshold)
-        hms_col_type_sniffer = HMSColumnTypeSniffer.create(threshold)
-        sniffer = DateSniffer(ymd_col_type_sniffer, hms_col_type_sniffer,
-                              [TokenRow([Token(OpCode.TEXT, 'entrée')])] * 100, threshold)
+        parser = Parser.create()
+        self.assertEqual("text", str(parser.parse(["entrée"] * 100)))
 
-        with self.assertRaises(ValueError):
-            sniffer.sniff()
+    def test2(self):
+        parser = Parser.create()
+        self.assertEqual("text", str(parser.parse(["64214_0010_00700"] * 100)))
+
+    def test3(self):
+        parser = Parser.create()
+        self.assertEqual("date/yyyyMMdd", str(parser.parse(
+            ['20200918', '20200920', '20200923', '20200927', '20200928',
+             '20201001', '20201006', '20201011', '20201016', '20201021',
+             '20201023', '20201024', '20201027', '20201028', '20201102',
+             '20201104', '20201108', '20201111', '20201113', '20201117',
+             '20201120', '20201124'])))
 
 
 if __name__ == '__main__':

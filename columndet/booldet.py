@@ -21,8 +21,7 @@
 import collections
 from typing import Set
 
-from columndet.field_description import FieldDescription, BooleanDescription, \
-    TextDescription
+from mcsv.meta_csv_data import FieldDescription, BooleanDescription
 from columndet.i18n import TRUE_FALSE_BY_LOCALE_NAME
 from columndet.util import get_some
 

@@ -1,0 +1,4 @@
+setuptools~=39.0.1
+chardet>=3.0.4
+git+https://github.com/jferard/py-mcsv
+pytest

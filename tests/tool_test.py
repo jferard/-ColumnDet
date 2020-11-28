@@ -40,7 +40,7 @@ class ToolTest(unittest.TestCase):
              'integer',
              'text',
              'text'],
-            meta_csv_data.field_descriptions)
+            [str(d) for d in meta_csv_data.field_descriptions])
         out = io.StringIO()
         meta_csv_data.write(out)
 
@@ -78,7 +78,7 @@ data,col/8/type,integer
              'text',
              'text',
              'text'],
-            meta_csv_data.field_descriptions)
+            [str(d) for d in meta_csv_data.field_descriptions])
         out = io.StringIO()
         meta_csv_data.write(out)
 

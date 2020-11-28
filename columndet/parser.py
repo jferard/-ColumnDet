@@ -21,20 +21,19 @@ import collections
 from typing import (Optional, List, Collection, Counter, Callable)
 
 from columndet import (ColumnInfos, OpCode, YMDBlockSniffer, HMSBlockSniffer,
-                       FieldDescription, DateSniffer)
+                       DateSniffer)
 from columndet.booldet import BooleanSniffer
 from columndet.datedet import (YMDColumnTypeSniffer, HMSColumnTypeSniffer,
                                DateFieldDescriptionFactory)
-from columndet.field_description import (CurrencyDescription,
-                                         PercentageDescription,
-                                         BooleanDescription, TextDescription,
-                                         IntegerDescription, DateDescription,
-                                         DatetimeDescription)
+from mcsv.meta_csv_data import (FieldDescription, CurrencyDescription,
+                                PercentageDescription, BooleanDescription,
+                                TextDescription, IntegerDescription,
+                                DateDescription, DatetimeDescription)
 from columndet.floatdet import FloatParser
-from columndet.i18n import DECIMAL_SEPARATORS, PERCENTAGE_SIGNS, \
-    CURRENCY_SYMBOLS, CURRENCY_CODES
+from columndet.i18n import (DECIMAL_SEPARATORS, PERCENTAGE_SIGNS,
+                            CURRENCY_SYMBOLS, CURRENCY_CODES)
 from columndet.lexer import (Lexer)
-from columndet.util import (get_unique, get_some, TokenRow, Token)
+from columndet.util import (get_unique, TokenRow, Token)
 
 
 class RowsInfos:

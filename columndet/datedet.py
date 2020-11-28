@@ -20,14 +20,14 @@
 
 import collections
 from enum import Enum
-from typing import (List, Optional, Sequence, Mapping, Collection, Iterable,
+from typing import (List, Optional, Mapping, Collection, Iterable,
                     Set)
 
-from columndet.field_description import (FieldDescription, DateDescription,
-                                         DatetimeDescription)
+from mcsv.meta_csv_data import (FieldDescription, DateDescription,
+                                DatetimeDescription)
 # Types
 from columndet.i18n import NAMES_BY_DATECODE_BY_LOCALE
-from columndet.util import (LocaleType, ColumnInfos, OpCode, get_unique,
+from columndet.util import (ColumnInfos, OpCode, get_unique,
                             TokenRow)
 
 DatePart = collections.namedtuple('DatePart', ['datecode', 'text', 'locale'])
@@ -268,8 +268,8 @@ class HMSColumnTypeSniffer:
             if DateCode.MINUTES in self._seen_datecodes:
                 if DateCode.SECONDS in self._seen_datecodes:
                     for i in range(1, 10):
-                        if max_v < 10**i:
-                            t = DatePart(DateCode.MILLISECONDS, 'S'*i, None)
+                        if max_v < 10 ** i:
+                            t = DatePart(DateCode.MILLISECONDS, 'S' * i, None)
                             break
                 elif max_v < 60:
                     t = DatePart(DateCode.SECONDS, 'ss', None)

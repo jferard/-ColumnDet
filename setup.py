@@ -17,9 +17,11 @@
 #   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from setuptools import setup
 
+
 def get_long_description():
     readme = open('README.md').read()
     return readme
+
 
 setup(
     name='ColumnDet',
@@ -33,6 +35,7 @@ setup(
     python_requires='>=3.6',
     url='https://github.com/jferard/columndet',
     classifiers=[
+        'Development Status :: 1 - Planning',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3',
@@ -49,4 +52,8 @@ setup(
         'datatype',
         'detector',
     ],
+    install_requires=[
+        "chardet>=3.0.4",
+        "mcsv"
+    ]
 )
